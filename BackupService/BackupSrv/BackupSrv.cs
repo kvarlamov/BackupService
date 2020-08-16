@@ -23,6 +23,11 @@ namespace BackupSrv
             Logic.Start();
         }
 
+        internal void TestStartupAndStop(string[] args)
+        {
+            this.OnStart(args);
+        }
+
         protected override void OnStop()
         {
         }

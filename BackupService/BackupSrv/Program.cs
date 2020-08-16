@@ -12,14 +12,23 @@ namespace BackupSrv
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
-        static void Main()
+        static void Main(string[] args)
         {
-            ServiceBase[] ServicesToRun;
-            ServicesToRun = new ServiceBase[]
+            if (Environment.UserInteractive)
             {
-                new BackupSrv()
-            };
-            ServiceBase.Run(ServicesToRun);
+                BackupSrv service1 = new BackupSrv();
+                service1.TestStartupAndStop(args);
+            }
+            else
+            {
+                ServiceBase[] ServicesToRun;
+                ServicesToRun = new ServiceBase[]
+                {
+                    new BackupSrv()
+                };
+                ServiceBase.Run(ServicesToRun);
+            }
+            
         }
     }
 }

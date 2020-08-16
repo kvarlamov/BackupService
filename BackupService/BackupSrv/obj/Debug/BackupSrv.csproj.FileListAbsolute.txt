@@ -1,0 +1,6 @@
+D:\IT\Programming\C#\BackupService\BackupService\BackupSrv\bin\Debug\BackupSrv.exe.config
+D:\IT\Programming\C#\BackupService\BackupService\BackupSrv\bin\Debug\BackupSrv.exe
+D:\IT\Programming\C#\BackupService\BackupService\BackupSrv\bin\Debug\BackupSrv.pdb
+D:\IT\Programming\C#\BackupService\BackupService\BackupSrv\obj\Debug\BackupSrv.csprojAssemblyReference.cache
+D:\IT\Programming\C#\BackupService\BackupService\BackupSrv\obj\Debug\BackupSrv.exe
+D:\IT\Programming\C#\BackupService\BackupService\BackupSrv\obj\Debug\BackupSrv.pdb
