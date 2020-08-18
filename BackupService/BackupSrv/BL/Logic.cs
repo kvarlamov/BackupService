@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Configuration;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Timers;
@@ -10,9 +12,34 @@ namespace BackupSrv.BL
     //https://docs.microsoft.com/en-us/dotnet/standard/io/how-to-copy-directories
     public static class Logic
     {
-        private static Timer _timer;
-        private static string _destination = @"D:\Temp";//!get path from config
+        private static readonly Timer Timer = new Timer();
+        private static string _destination = ConfigurationManager.AppSettings["FolderToBackUp"];
         public static void Start()
+        {
+            Timer.Enabled = true;
+            Timer.AutoReset = true;
+
+            string stringTime = ConfigurationManager.AppSettings["TimerOnShedule"];
+            DateTime time;
+            int minutes = 0;
+            if (!DateTime.TryParseExact(stringTime, "hh:mm", new CultureInfo("ru-Ru"), DateTimeStyles.None, out time))
+            {
+                string stringInterval = ConfigurationManager.AppSettings["TimerMinutesInterval"];
+                
+                if (!int.TryParse(stringInterval, out minutes))
+                {
+                    //log invalid interval
+                    return;
+                }
+            }
+
+            Timer.Interval = TimeSpan.FromMinutes(minutes).TotalMilliseconds;
+            Timer.Elapsed += (s,e) => MakeBackup();
+            
+            MakeBackup();
+        }
+
+        private static void MakeBackup()
         {
             var folders = GetFoldersForBackup();
             if (folders.Any())
@@ -37,8 +64,6 @@ namespace BackupSrv.BL
                     "Source directory does not exist or could not be found: "
                     + sourceDirName);
             }
-
-            
 
             // Get the subdirectories for the specified directory.
             DirectoryInfo[] dirs = dir.GetDirectories();
