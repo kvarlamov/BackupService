@@ -72,6 +72,14 @@ namespace BackupSrv.BL
             {
                 Directory.CreateDirectory(destDirName);
             }
+            else
+            {
+                if (GetDirectorySize(destDirName) == GetDirectorySize(sourceDirName))
+                {
+                    //Add log that folder is up to date
+                    return;
+                }
+            }
 
             FileInfo[] files = dir.GetFiles();
             foreach (FileInfo file in files)
@@ -114,6 +122,19 @@ namespace BackupSrv.BL
         private static bool ClearOldData()
         {
             return true;
+        }
+
+        private static long GetDirectorySize(string directoryName)
+        {
+            long totalSize = 0;
+            string[] files = Directory.GetFiles(directoryName, ".", SearchOption.AllDirectories);
+            for (int i = 0; i < files.Length; i++)
+            {
+                FileInfo info = new FileInfo(files[i]);
+                totalSize += info.Length;
+            }
+
+            return totalSize;
         }
     }
 }
