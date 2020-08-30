@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Configuration;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Timers;
 
 namespace BackupSrv.BL
@@ -12,12 +14,17 @@ namespace BackupSrv.BL
     //https://docs.microsoft.com/en-us/dotnet/standard/io/how-to-copy-directories
     public static class Logic
     {
+        private static int ObsolescenceHours { get; set; }
+
         private static readonly Timer Timer = new Timer();
-        private static string _destination = ConfigurationManager.AppSettings["FolderToBackUp"];
+        private static string _destination = ConfigurationManager.AppSettings["FolderToBackup"];
+        private static string _obsolescenceHours = ConfigurationManager.AppSettings["ObsolescenceHours"];
         public static void Start()
         {
             Timer.Enabled = true;
             Timer.AutoReset = true;
+
+            ObsolescenceHours = int.TryParse(_obsolescenceHours, out int result) ? result : 24;
 
             string stringTime = ConfigurationManager.AppSettings["TimerOnShedule"];
             DateTime time;
@@ -44,21 +51,43 @@ namespace BackupSrv.BL
             var folders = GetFoldersForBackup();
             if (folders.Any())
             {
-                //_destination = "";//get folder to backup from app.config
-                folders.ForEach(f =>
+                Parallel.ForEach(folders, f =>
                 {
                     string folderName = new string(f.Reverse().TakeWhile(ch => ch != '\\').Reverse().ToArray());
                     string destDirName = $"{_destination}\\{folderName}";
-                    DirectoryCopy(f, destDirName);
+                    try
+                    {
+                        DirectoryCopy(f, destDirName, true);
+                    }
+                    catch (Exception e)
+                    {
+                        //Log exception
+                        Console.WriteLine(e);
+                    }
                 });
+                //folders.ForEach(f =>
+                //{
+                //    string folderName = new string(f.Reverse().TakeWhile(ch => ch != '\\').Reverse().ToArray());
+                //    string destDirName = $"{_destination}\\{folderName}";
+                //    try
+                //    {
+                //        DirectoryCopy(f, destDirName, true);
+                //    }
+                //    catch (Exception e)
+                //    {
+                //        //Log exception
+                //        Console.WriteLine(e);
+                //    }
+                //});
             }
         }
 
-        private static void DirectoryCopy(string sourceDirName, string destDirName)
+        private static void DirectoryCopy(string sourceDirName, string destDirName, bool isRootProjectFolder)
         {
-            DirectoryInfo dir = new DirectoryInfo(sourceDirName);
+            //Folder to backup
+            DirectoryInfo backupFromFolder = new DirectoryInfo(sourceDirName);
 
-            if (!dir.Exists)
+            if (!backupFromFolder.Exists)
             {
                 throw new DirectoryNotFoundException(
                     "Source directory does not exist or could not be found: "
@@ -66,22 +95,39 @@ namespace BackupSrv.BL
             }
 
             // Get the subdirectories for the specified directory.
-            DirectoryInfo[] dirs = dir.GetDirectories();
+            DirectoryInfo[] dirs = backupFromFolder.GetDirectories();
             // If the destination directory doesn't exist, create it.
             if (!Directory.Exists(destDirName))
             {
                 Directory.CreateDirectory(destDirName);
             }
-            else
+            else if (isRootProjectFolder)
             {
-                if (GetDirectorySize(destDirName) == GetDirectorySize(sourceDirName))
+                DirectoryInfo projectFolder = new DirectoryInfo(destDirName);
+                var oldData = projectFolder.GetDirectories()
+                    .Where(d => DateTime.Now - d.CreationTime > TimeSpan.FromHours(ObsolescenceHours)).ToList();
+                oldData.ForEach(d => d.Delete(true));
+
+                var backups = projectFolder.GetDirectories();
+                if (backups.Any())
                 {
-                    //Add log that folder is up to date
-                    return;
+                    var lastCreated = backups.Aggregate((f1, f2) => f1.CreationTime > f2.CreationTime ? f1 : f2);
+                    if (GetDirectorySize(lastCreated.FullName) == GetDirectorySize(sourceDirName))
+                    {
+                        //Add log that folder is up to date
+                        return;
+                    }
                 }
             }
 
-            FileInfo[] files = dir.GetFiles();
+            FileInfo[] files = backupFromFolder.GetFiles();
+
+            if (isRootProjectFolder)
+            {
+                destDirName = $"{destDirName}\\{DateTime.Now.ToString("MM-dd-yyyy_hh-mm")}";
+                Directory.CreateDirectory(destDirName);
+            }
+
             foreach (FileInfo file in files)
             {
                 string path = Path.Combine(destDirName, file.Name);
@@ -92,10 +138,9 @@ namespace BackupSrv.BL
             foreach (DirectoryInfo subDir in dirs)
             {
                 string path = Path.Combine(destDirName, subDir.Name);
-                DirectoryCopy(subDir.FullName, path);
+                DirectoryCopy(subDir.FullName, path, false);
             }
         }
-
 
         /// <summary>
         /// Get folders to be backuped from app.config
@@ -114,14 +159,6 @@ namespace BackupSrv.BL
                 return folders;
             }
             return null;
-        }
-
-        /// <summary>
-        /// delete old backups
-        /// </summary>
-        private static bool ClearOldData()
-        {
-            return true;
         }
 
         private static long GetDirectorySize(string directoryName)
