@@ -25,5 +25,6 @@ Name of project isn't important - it just used by user to identification his pro
 You can add so many projects how many you need.
 
 CURRENT PLANS:
-      *Add auto installer for convenience
-      *Add logging of service working
+
+- Add auto installer for convenience
+- Add logging of service working
