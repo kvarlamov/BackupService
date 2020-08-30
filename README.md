@@ -19,11 +19,11 @@ SECTION BackupFromFolders:
 To this section please add strings with folder path to backup, and project name. 
 Name of project isn't important - it just used by user to identification his projects. Example:
 
-  <add key="Project1" value="D:\Project1"/> - folder from value will be backuped to value by key="FolderToBackUp" from section "appSettings"
+    <add key="Project1" value="D:\Project1"/> - folder from value will be backuped to value by key="FolderToBackUp" from section "appSettings"
 
 
 You can add so many projects how many you need.
 
 CURRENT PLANS:
-  *Add auto installer for convenience
-  *Add logging of service working
+      *Add auto installer for convenience
+      *Add logging of service working
