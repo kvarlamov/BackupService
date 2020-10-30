@@ -14,20 +14,20 @@ namespace BackupSrv
         /// </summary>
         static void Main(string[] args)
         {
-            if (Environment.UserInteractive)
-            {
-                BackupSrv service1 = new BackupSrv();
-                service1.TestStartupAndStop(args);
-            }
-            else
-            {
+            //if (Environment.UserInteractive)
+            //{
+            //    BackupSrv service1 = new BackupSrv();
+            //    service1.TestStartupAndStop(args);
+            //}
+            //else
+            //{
                 ServiceBase[] ServicesToRun;
                 ServicesToRun = new ServiceBase[]
                 {
                     new BackupSrv()
                 };
                 ServiceBase.Run(ServicesToRun);
-            }
+            //}
             
         }
     }

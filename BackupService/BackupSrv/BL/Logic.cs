@@ -62,7 +62,7 @@ namespace BackupSrv.BL
                     catch (Exception e)
                     {
                         //Log exception
-                        Console.WriteLine(e);
+                        
                     }
                 });
                 //folders.ForEach(f =>
